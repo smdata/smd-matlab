@@ -1,27 +1,13 @@
 Single-molecule Dataset (SMD) Format
 ==
 
-Installation
+The single-molecule dataset (SMD) format has been jointly developed in the groups of Dan Herschlag ([Stanford](http://cmgm.stanford.edu/herschlag/)) and Ruben Gonzalez ([Columbia](http://www.columbia.edu/cu/chemistry/groups/gonzalez/index.html)) to facilitate publication and exchange of data and analysis results obtained in single-molecule studies.
+This repository contains Matlab utility functions for creating, validating, saving and loading SMD structures in [Matlab](http://www.mathworks.com/products/matlab/). 
+
+Format Description
 --
 
-1.  Download this repository from  
-    https://github.com/smdata/smd-matlab/archive/master.zip  
-
-2.  Unzip `master.zip` to some location (e.g. `c:\path\`)
-
-3.  Add the `smdata` directory to the Matlab path by typing
-
-    ```
-    addpath(genpath('c:\path\smd-matlab\'))
-    ```
-
-    where `c:\path\` is the directory where `master.zip` was unpacked.
-
-
-Format Layout
---
-
-The representation of an SMD structure in Matlab is as follows
+The representation of a SMD structure in Matlab is as follows
 
 > -   **dataset** : `struct`  
     -   **.id** : `string`  
@@ -55,6 +41,22 @@ The top-level structure of the SMD format contains four fields
     -   **index**: This field contains a list of row labels for the values matrix, which typically hold the measurement times. This field should have the same length as the values field. 
     -   **values**: This field contains the actual trace data, where each column represents a different channel. Most simply, a channel can contain raw single molecule data, but depending on the user, it could equally well be used to store window-averaged data, thresholded data, fits of the data or an arbitrary number of other series data.
     -   **attr**: This attributes field has much the same role as the top-level attribute field, but is specific to this particular trace. Within this data field a user can store any additional information they are interested in storing. This could be anything from a kinetic or thermodynamic parameter algorithmically determined for a particular trace to an observation of that particular trace that an experimentalist wants to note for future reference.
+
+Installation
+--
+
+1.  Download this repository from  
+    https://github.com/smdata/smd-matlab/archive/master.zip  
+
+2.  Unzip `master.zip` to some location (e.g. `c:\path\`)
+
+3.  Add the `smdata` directory to the Matlab path by typing
+
+    ```
+    addpath(genpath('c:\path\smd-matlab\'))
+    ```
+
+    where `c:\path\` is the directory where `master.zip` was unpacked.
 
 Functions
 --
@@ -92,7 +94,7 @@ end
 Create a SMD structure
 
 ```matlab
-% initialize smd dataset
+% initialize smd structure
 dataset = smd.create(data, {'state', 'observation'})
 % add global attributes 
 dataset.attr.description = 'example data: mixture of 3 gaussians with equal occupancy';
