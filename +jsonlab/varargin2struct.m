@@ -28,7 +28,7 @@ if(len==0) return; end
 i=1;
 while(i<=len)
     if(isstruct(varargin{i}))
-        opt=ebfret.deps.jsonlab.mergestruct(opt,varargin{i});
+        opt=jsonlab.mergestruct(opt,varargin{i});
     elseif(ischar(varargin{i}) && i<len)
         opt=setfield(opt,varargin{i},varargin{i+1});
         i=i+1;

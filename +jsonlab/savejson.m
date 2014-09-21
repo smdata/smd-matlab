@@ -80,7 +80,7 @@ varname=inputname(2);
 if(length(varargin)==1 && ischar(varargin{1}))
    opt=struct('FileName',varargin{1});
 else
-   opt=ebfret.deps.jsonlab.varargin2struct(varargin{:});
+   opt=jsonlab.varargin2struct(varargin{:});
 end
 opt.IsOctave=exist('OCTAVE_VERSION');
 rootisarray=0;

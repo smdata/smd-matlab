@@ -58,7 +58,7 @@ arraytoken=sort([arraytoken escquote]);
 esc = find(inStr=='"' | inStr=='\' ); % comparable to: regexp(inStr, '["\\]');
 index_esc = 1; len_esc = length(esc);
 
-opt=ebfret.deps.jsonlab.varargin2struct(varargin{:});
+opt=jsonlab.varargin2struct(varargin{:});
 jsoncount=1;
 while pos <= len
     switch(next_char)
