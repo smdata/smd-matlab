@@ -107,7 +107,7 @@ Save data to disk
 
 ```matlab
 % save as Matlab data
-save('example.mat', 'dataset', '-struct');
+save('example.mat', '-struct', 'dataset');
 % save as plain text JSON (uncompressed)
 smd.write_json('example.json', dataset);
 % save as plain text JSON (with gzip compression)
