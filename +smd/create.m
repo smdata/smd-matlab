@@ -1,5 +1,5 @@
-function dataset = create(data, columns, varargin)
-% dataset = create(data, columns, varargin)
+function dataset = create(data, types, varargin)
+% dataset = create(data, types, varargin)
 %
 % Creates a single-molecule dataset structure from supplied data.
 %
@@ -8,13 +8,13 @@ function dataset = create(data, columns, varargin)
 %   data : N x 1 cell,  M x D numeric,  N x T x D numeric
 %       Time series data. May be formatted in 3 ways
 %       1. As a cell array, where each data{n} is a T{n} x D array
-%       2. As a T x D flat array, e.g. of form [id, time, values]
+%       2. As a T x D 'stacked' array, e.g. of form [id, time, values]
 %       3. As a N x T x D array 
-%   columns : D x 1 cell   
-%       Column labels for time series data, eg {'id', 'time', 'fret'}. 
-%       The following labels have special meanings:
-%       'index' : used to specify dataset.data(n).index
-%       'id' : used to specify dataset.data(n).id
+%   types : cell
+%       Format specifier for data of the form {'column','format', ...}. 
+%       Each 'format' specifier may be one of {'bool','float','int','long','string'}. If the supplied data is in 
+%       stacked form, the type specifier must contain entries 
+%       {'id','format'}
 %
 % Variable Inputs
 % ---------------
@@ -37,65 +37,78 @@ function dataset = create(data, columns, varargin)
 ip = inputParser();
 ip.StructExpand = false;
 ip.addRequired('data');
-ip.addRequired('columns', @iscell);
+ip.addRequired('types', @iscell);
 ip.addParamValue('index', {});
 ip.addParamValue('desc', '', @isstr);
 ip.addParamValue('id', '', @isstr);
 ip.addParamValue('attr', struct(), @isstruct);
 ip.addParamValue('data_ids', {}, @iscell);
 ip.addParamValue('data_attrs', struct(), @isstruct);
-ip.parse(data, columns, varargin{:});
+ip.parse(data, types, varargin{:});
 args = ip.Results;
 
-% parse columns argument
-[m, i] = ismember('index', lower(args.columns));
-index_label = m * i;
-[m, i] = ismember('id', lower(args.columns));
-id_label = m * i;
-value_columns = setdiff(1:length(args.columns), [index_label, id_label]);
+
+% parse type arguments
+col_labels = args.types(1:2:end);
+col_formats = args.types(2:2:end);
+
+% identify index and id columns (if provided)
+[m, i] = ismember('index', lower(col_labels));
+index_column = m * i;
+[m, i] = ismember('id', lower(col_labels));
+id_column = m * i;
+value_columns = setdiff(1:length(col_labels), [index_column, id_column]);
 D = length(value_columns);
 
 % helper function for parsing data argument
-function d = parse_data(data, dfs, tf, idf)
+function d = parse_data(data, ...
+                        col_labels, col_formats, ...
+                        dfs, tf, idf)
+    % determine if data is stackedxw
     if idf
-        % split by id if necessary
+        % split by id
         id = data(:, idf);
         ids = unique(id);
         for n = 1:length(ids)
             d(n).id = num2str(ids(n));
             i = find(id == ids(n));
             if tf 
-                d(n).index = data(i, tf);
+                d(n).index = data(i, tf)';
             else
-                d(n).index = (1:length(i))';
+                d(n).index = 1:length(i);
             end
-            d(n).values = data(i, dfs);
+            for c = dfs
+                d(n).values.(columns{c}) = data(i, c)';
+            end
         end
     else
         % assume single trace with blank id
         d.id = '';        
         if tf
-            d.index = data(:, tf);
+            d.index = data(:, tf)';
         else
-            d.index = (1:length(data))';
+            d.index = 1:length(data);
         end
-        d.values = data(:, dfs);
+        for c = dfs
+            d.values.(col_labels{c}) = data(:, c)';
+        end
     end
 end
 
 % parse data argument
 if iscell(args.data)
-    data = cellfun(@(d) parse_data(d, value_columns, ...
-                                   index_label, id_label), ... 
+    data = cellfun(@(d) parse_data(d, ...
+                                   col_labels, col_formats, ...
+                                   value_columns, index_column, id_column), ... 
                    {args.data{:}});
 elseif isnumeric(args.data)
     switch ndims(args.data)
         case 2
-            data = parse_data(args.data, value_columns, index_label, id_label);
+            data = parse_data(args.data, value_columns, index_column, id_column);
         case 3
             data = ...
                 arrayfun(@(n) parse_data(squeeze(args.data(n,:,:)), ...
-                                         value_columns, index_label, id_label), ...
+                                         value_columns, index_column, id_column), ...
                          1:size(args.data, 1));
         otherwise
             error('SMD:InvalidInput', ...
@@ -155,7 +168,7 @@ end
 % replace any empty time series ids with hashes
 for n = 1:length(data)
     if isempty(data(n).id)
-        data(n).id = datahash.datahash(data(n).values);
+        data(n).id = datahash.datahash(data(n));
     end
 end
 
@@ -167,8 +180,9 @@ else
 end
 
 % desc contains column labels if unspecified
+
 if isempty(args.desc)
-    args.desc = [sprintf('%s-', columns{1:end-1}), columns{end}];
+    args.desc = strjoin(col_labels, '-');
 end
 
 % assign data structure
@@ -176,6 +190,6 @@ dataset = struct();
 dataset.desc = args.desc;
 dataset.id = id;
 dataset.attr = args.attr;
-dataset.columns = args.columns(value_columns);
+dataset.types = struct(args.types{:});
 dataset.data = data;
 end
