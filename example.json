@@ -4,8 +4,11 @@
 	"attr": {
 	},
 	"types": {
-		"state": "int",
-		"observation": "float"
+		"values": {
+			"state": "int",
+			"observation": "float"
+		},
+		"index": "int"
 	},
 	"data": [
 		{

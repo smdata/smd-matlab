@@ -14,12 +14,16 @@ function dataset = merge(varargin)
 
     for n = 2:length(datasets)
         % check that column names are the same
-        if ~all(strcmp(fieldnames(datasets(1).types), fieldnames(datasets(n).types)))
+        if ~all(strcmp(fieldnames(datasets(1).types.values), fieldnames(datasets(n).types.values)))
             error('SMD:ColumnsMismatch', ...
                   'Column labels are not consistent for all arguments.')
         end    
         % check that column data types are the same
-        if ~all(strcmp(struct2cell(datasets(1).types), struct2cell(datasets(n).types)))
+        if ~strcmp(datasets(1).types.index, datasets(n).types.index)
+            error('SMD:TypeMismatch', ...
+                  'Data types are not consistent for all arguments.')
+        end    
+        if ~all(strcmp(struct2cell(datasets(1).types.values), struct2cell(datasets(n).types.values)))
             error('SMD:TypeMismatch', ...
                   'Data types are not consistent for all arguments.')
         end    
@@ -70,7 +74,7 @@ function dataset = merge(varargin)
             dataset.data(n).attr = attrs(n);
         end
     end
-        
+
     % calculate id from hash
     dataset.id = datahash.datahash(dataset.data);
 end

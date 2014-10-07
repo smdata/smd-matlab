@@ -47,10 +47,21 @@ ip.addParamValue('data_attrs', struct(), @isstruct);
 ip.parse(data, types, varargin{:});
 args = ip.Results;
 
-
 % parse type arguments
 col_labels = args.types(1:2:end);
 col_formats = args.types(2:2:end);
+types.values = struct(args.types{:});
+if isfield(types.values, 'index')
+    types.index = types.values.index;
+    types.values = rmfield(types.values,'index');
+else
+    if isempty(args.index)
+        types.index = 'int';
+    else
+        % TODO: infer type here? 
+        types.index = 'double';
+    end
+end
 
 % identify index and id columns (if provided)
 [m, i] = ismember('index', lower(col_labels));
@@ -190,6 +201,6 @@ dataset = struct();
 dataset.desc = args.desc;
 dataset.id = id;
 dataset.attr = args.attr;
-dataset.types = struct(args.types{:});
+dataset.types = types;
 dataset.data = data;
 end
