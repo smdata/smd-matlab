@@ -21,8 +21,8 @@ function dataset = create(data, columns, varargin)
 %   index : N x T  or N x 1 cell of T{n} x 1 float
 %       May be used to separately specify time index values. Overrides 
 %       entries supplied in data argument.
-%   type : string
-%       Type id for data. Constructed from columns if left blank.
+%   desc : string
+%       Descriptor for data. Constructed from columns if left blank.
 %   id : string
 %       Unique id for dataset. Computed using hash if not specified.
 %   attr : struct
@@ -39,7 +39,7 @@ ip.StructExpand = false;
 ip.addRequired('data');
 ip.addRequired('columns', @iscell);
 ip.addParamValue('index', {});
-ip.addParamValue('type', '', @isstr);
+ip.addParamValue('desc', '', @isstr);
 ip.addParamValue('id', '', @isstr);
 ip.addParamValue('attr', struct(), @isstruct);
 ip.addParamValue('data_ids', {}, @iscell);
@@ -166,14 +166,14 @@ else
     id = args.id;
 end
 
-% type contains column labels if unspecified
-if isempty(args.type)
-    args.type = [sprintf('%s-', columns{1:end-1}), columns{end}];
+% desc contains column labels if unspecified
+if isempty(args.desc)
+    args.desc = [sprintf('%s-', columns{1:end-1}), columns{end}];
 end
 
 % assign data structure
 dataset = struct();
-dataset.type = args.type;
+dataset.desc = args.desc;
 dataset.id = id;
 dataset.attr = args.attr;
 dataset.columns = args.columns(value_columns);
