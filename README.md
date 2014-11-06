@@ -12,11 +12,13 @@ The representation of a SMD structure in Matlab is as follows
 > -   **dataset** : `struct`  
     -   **.id** : `string`  
         Unique identifier for collection of traces (e.g. a hash)
-    -   **.type** : `string`  
-        Decriptor for datatype
-    -   **.columns** : `1 x D cell`  
-        column labels, e.g. `{'donor', 'acceptor'}`, `{'fret'}`, 
-        `{'viterbi_state_mean', 'viterbi_state_index'}`
+    -   **.desc** : `string`  
+        Human-readable decriptor for dataset
+    -   **.types** : `struct`  
+        - **.index** : `"bool" | "float" | "double" | "int" | "long" | "string"`
+          Data type for index
+        - **.values** : `struct`
+          Data types for column values. Each field **.column_name** contains a format string as in **.index**
     -   **.attr** : `struct`  
         Dataset level features (e.g. descriptors of experimental 
         conditions)
@@ -25,22 +27,21 @@ The representation of a SMD structure in Matlab is as follows
             Unique identifier for trace (e.g. a hash)
         -   **.attr** : `struct`  
             Any trace-specific features that are not series
-        -   **.index** : `T x 1 matrix`  
+        -   **.index** : `1 x T vector`  
             Row index for trace data (e.g. acquisition times)
-        -   **.values** : `T x D matrix`  
-            Trace data. `dataset.data(n).values(t, d)` contains the value of
-            trace `n`, column `d`, at index `t`.  
+        -   **.values** : `struct`  
+            Column values. Each field **.column_name** holds a `1 x T vector`
 
-The top-level structure of the SMD format contains four fields 
+-  **desc**. This field serves to provide a simple descriptor of the data set contained herein. 
+-   **id**. This field serves as a unique identifier for the particular set of traces that are grouped in this data structure. By default, a MD5 algorithm is used to generate a 32 digit hexadecimal number that is practically unique. This helps to ensure that when datasets generated at different times are combined, it remains easy to track the source of each dataset.
+-   **attr**. The attributes field stores information related to a particular group of traces. This could be information such as the day the experiment was completed, the exact experimental conditions, or any other information that relates to the data set as a whole.
+-   **types**. Holds type identifiers for the index and values fields.  Each field of data being stored in the values field should be specified here.  These identifiers are ‘bool’, ‘float’, ‘double’, ‘int’, ‘long’ and ‘string’.
+-   **data**. Holds a list of entries for each trace, which themselves contain a set of fields:
+    -   **id**. Holds a trace-specific identifier. By default a MD5 hash is of the values structure is used. 
+    -   **index**. This field contains a list of row labels for the values matrix, which typically hold the measurement times. This field should have the same length as the data in the values field. 
+    -   **values**. This field contains the actual single-molecule data. Most simply, each data type being used is stored in a field with a descriptive name (e.g., channel1). While this is primarily intended to store raw single-molecule data, it could equally well be used to store window-averaged data, thresholded data, fits of the data or an arbitrary number of other series data.
+    -   **attr**. This attributes field has much the same role as the top-level attributes field, but is specific to this particular trace. Within this data field a user can store any additional information they are interested in storing. This could be anything from a kinetic or thermodynamic parameter algorithmically determined for a particular trace to an observation of that particular trace that an experimentalist wants to note for future reference.
 
--   **id**: This field serves as a unique identifier for the particular set of traces that are grouped in this data structure. While there are no specific requirements enforced by SMD, it is recommended that a hash function be used to generate a identifier for each data set.  This will help insure that when data sets generated at different times are combined it will be easy to track the source of each data set.
--   **attr**: This attributes field is provided to store information related to that particular group of traces. This could be information such as the day the experiment was completed, the exact experimental conditions, or any other information that relates to the data set as a whole.
--   **columns**: This holds a set of labels that describe the columns in each values entry for individual time series, which are assumed to be identical across the data set (e.g. donor, acceptor, Viterbi algorithm-inferred state). 
--   **data**: This holds a list of entries for each trace, which themselves contain a set of fields:
-    -   **id**: This field holds a trace-specific identifier, which may be generated by running a hash function on the values matrix.
-    -   **index**: This field contains a list of row labels for the values matrix, which typically hold the measurement times. This field should have the same length as the values field. 
-    -   **values**: This field contains the actual trace data, where each column represents a different channel. Most simply, a channel can contain raw single molecule data, but depending on the user, it could equally well be used to store window-averaged data, thresholded data, fits of the data or an arbitrary number of other series data.
-    -   **attr**: This attributes field has much the same role as the top-level attribute field, but is specific to this particular trace. Within this data field a user can store any additional information they are interested in storing. This could be anything from a kinetic or thermodynamic parameter algorithmically determined for a particular trace to an observation of that particular trace that an experimentalist wants to note for future reference.
 
 Installation
 --
@@ -61,7 +62,7 @@ Installation
 Functions
 --
 
-**smd.create(data, column_labels, varargin)**: Creates a SMD structure from supplied data.
+**smd.create(data, types, varargin)**: Creates a SMD structure from supplied data.
 
 **smd.write_json(filename, dataset)**: Saves a SMD structure as JSON (`.json`)or compressed JSON (`.json.gz`).
 
@@ -76,7 +77,7 @@ Functions
 Example Usage
 --
 
-Generate some fake data: Mixture of 3 gaussian distributions
+Generate some fake data: Mixture of 3 Gaussian distributions
 
 ```matlab
 state_mean = [0.1, 0.5, 0.7];
@@ -92,10 +93,9 @@ end
 ```
 
 Create a SMD structure
-
 ```matlab
 % initialize smd structure
-dataset = smd.create(data, {'state', 'observation'})
+dataset = smd.create(data, {'state', 'int', 'observation', 'float'})
 % add global attributes 
 dataset.attr.description = 'example data: mixture of 3 gaussians with equal occupancy';
 dataset.attr.state_mean = state_mean;
@@ -104,7 +104,6 @@ dataset.attr.max_length = max_length;
 ```
 
 Save data to disk
-
 ```matlab
 % save as Matlab data
 save('example.mat', '-struct', 'dataset');
