@@ -8,14 +8,21 @@ v = false;
 if ~isstruct(dataset)
     return
 end
+
 % check that all required top-level fields exist
 if ~all(isfield(dataset, {'desc', 'id', 'attr', 'types', 'data'}))
     return
 end
-% check column specifiers
-columns = fieldnames(dataset.types);
+
+% check type specifiers
+if ~any(strcmpi(dataset.types.index, ...
+                {'bool', 'float', 'double', 'int', 'long', 'string'}))
+    return
+end
+columns = fieldnames(dataset.types.values);
 for c = 1:length(columns)
-	if ~any(strcmpi(dataset.types.(columns{c}), {'bool', 'float', 'double', 'int', 'long', 'string'}))
+	if ~any(strcmpi(dataset.types.values.(columns{c}), ...
+	                {'bool', 'float', 'double', 'int', 'long', 'string'}))
 	    return
 	end
 end
